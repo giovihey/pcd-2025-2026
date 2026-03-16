@@ -1,6 +1,6 @@
 package pcd.lab05.monitors;
 
-public class TestBoundedBuffer {
+public class wTestBoundedBuffer {
 
 	public static void main(String[] args){
 		

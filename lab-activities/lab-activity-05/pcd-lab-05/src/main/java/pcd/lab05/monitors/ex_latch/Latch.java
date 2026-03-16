@@ -11,7 +11,7 @@ package pcd.lab05.monitors.ex_latch;
  */
 public interface Latch {
 
-	void countDown();
+	void countDown() throws InterruptedException;
 	
 	void await() throws InterruptedException;
 }
