@@ -19,7 +19,7 @@ public class LatchImpl2 implements Latch {
     }
 
     @Override
-    public synchronized void countDown() throws InterruptedException {
+    public void countDown() throws InterruptedException {
         try {
             lock.lock();
             while (nCounts < nCountDowns) {
@@ -31,7 +31,7 @@ public class LatchImpl2 implements Latch {
     }
 
     @Override
-    public synchronized void await() throws InterruptedException {
+    public void await() throws InterruptedException {
         try {
             lock.lock();
             nCounts++;
