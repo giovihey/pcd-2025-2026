@@ -6,37 +6,37 @@ public class SynchCell2 {
 
 	private int value;
 	private boolean available;
-	private Lock mutex;   
+	private Lock lock;
 	private Condition isAvail;
 
 	public SynchCell2(){
 		available = false;
-		mutex = new ReentrantLock(); 
-		isAvail = mutex.newCondition();
+		lock = new ReentrantLock();
+		isAvail = lock.newCondition();
 	}
 
 	public void set(int v){
 		try {
-			mutex.lock();
+			lock.lock();
 			value = v;
 			available = true;
 			isAvail.signalAll();  
 		} finally {
-			mutex.unlock();
+			lock.unlock();
 		}
 	}
 	
 	public int get() {
 		try {
-			mutex.lock();
-			if (!available){
+			lock.lock();
+			while (!available){
 				try {
 					isAvail.await();
 				} catch (InterruptedException ex){}
 			} 
 			return value;
 		} finally {
-			mutex.unlock();
+			lock.unlock();
 		}
 	}
 }
