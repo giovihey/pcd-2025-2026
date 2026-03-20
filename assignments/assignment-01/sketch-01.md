@@ -35,8 +35,8 @@ The program implements simple elastic collisions between bodies with a certain m
 Rendering is requested by the thread running the main loop when calling `view.render`.  
 - Painting is performed by the EDT (i.e. the Swing thread), asynchronously, when a `repaint` Swing method is requested (on a frame or a panel or any Swing component) 
 - If painting is done while the view model is udpated, we can have races
-- To avoid this, `view.render` is implemented with a synchronous behaviour, so that it returns only when the rendering has been completed, so before computing the next state and view model 
-  - the solution adopts a monitor (`RenderSynch`) is used to synchronize the EDT rendering with the thread requesting repainting
+- To avoid this, `view.render` is implemented with a synchronous behaviour, so that it returns only when the rendering has been completed, before computing the next state and view model 
+  - the solution adopts a monitor (`RenderSynch`), used to synchronize the EDT with the thread requesting repainting
   - more efficient approaches can be adopted, such as [double buffering](https://en.wikipedia.org/wiki/Multiple_buffering).
 
 ### About Scale
