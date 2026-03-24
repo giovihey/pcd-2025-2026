@@ -55,6 +55,28 @@ public class ViewFrame extends JFrame {
             delta = Math.min(ox, oy);
         }
 
+		/**
+		 * Draws a ball on the graphics context with the specified stroke width and optional label.
+		 * @param g2 the Graphics2D object to draw on
+		 * @param ball the BallViewInfo containing position and radius
+		 * @param strokeWidth the width of the stroke for the ball's outline
+		 * @param label the text label to draw inside the ball, or null/empty for no label
+		 */
+        private void drawBallWithLabel(Graphics2D g2, BallViewInfo ball, int strokeWidth, String label) {
+            if (ball != null) {
+                var p1 = ball.pos();
+                int x0 = (int)(ox + p1.x()*delta);
+                int y0 = (int)(oy - p1.y()*delta);
+                int radiusX = (int)(ball.radius()*delta);
+                int radiusY = (int)(ball.radius()*delta);
+                g2.setStroke(new BasicStroke(strokeWidth));
+                g2.drawOval(x0 - radiusX, y0 - radiusY, radiusX*2, radiusY*2);
+                if (label != null && !label.isEmpty()) {
+                    g2.drawString(label, x0 - 3, y0 + 5);
+                }
+            }
+        }
+
         public void paint(Graphics g){
     		Graphics2D g2 = (Graphics2D) g;
     		
@@ -70,34 +92,18 @@ public class ViewFrame extends JFrame {
     		g2.drawLine(0,oy,ox*2,oy);
     		g2.setColor(Color.BLACK);
     		
-    		    g2.setStroke(new BasicStroke(1));
 	    		for (var b: model.getBalls()) {
-	    			var p = b.pos();
-	            	int x0 = (int)(ox + p.x()*delta);
-	                int y0 = (int)(oy - p.y()*delta);
-	                int radiusX = (int)(b.radius()*delta);
-	                int radiusY = (int)(b.radius()*delta);
-	                g2.drawOval(x0 - radiusX,y0 - radiusY,radiusX*2,radiusY*2);
+	    		    drawBallWithLabel(g2, b, 1, "");
 	    		}
 	
-    		    g2.setStroke(new BasicStroke(3));
-	    		var pb = model.getPlayerBall();
-	    		if (pb != null) {
-					var p1 = pb.pos();
-		        	int x0 = (int)(ox + p1.x()*delta);
-		            int y0 = (int)(oy - p1.y()*delta);
-	                int radiusX = (int)(pb.radius()*delta);
-	                int radiusY = (int)(pb.radius()*delta);
-	                g2.drawOval(x0 - radiusX,y0 - radiusY,radiusX*2,radiusY*2);
-	    		}
+    		    drawBallWithLabel(g2, model.getPlayerBall(), 3, "H");
+    		    drawBallWithLabel(g2, model.getBotBall(), 3, "B");
     		    
     		    g2.setStroke(new BasicStroke(1));
 	    		g2.drawString("Num small balls: " + model.getBalls().size(), 20, 40);
 	    		g2.drawString("Frame per sec: " + model.getFramePerSec(), 20, 60);
 
 	    		sync.notifyFrameRendered();
-    		
         }
-        
     }
 }

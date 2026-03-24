@@ -14,8 +14,8 @@ public class Sketch01 {
 		 * - massive: 4500 small balls 
 		 */
 		
-		var boardConf = new MinimalBoardConf();
-		// var boardConf = new LargeBoardConf();
+		//var boardConf = new MinimalBoardConf();
+		 var boardConf = new LargeBoardConf();
 		// var boardConf = new MassiveBoardConf();
 		
 		Board board = new Board();
@@ -33,22 +33,18 @@ public class Sketch01 {
 		long lastUpdateTime = System.currentTimeMillis();
 			
 		var pb = board.getPlayerBall();
+		var bb = board.getBotBall();
 		var rand = new Random(2);
 		var lastKickTime = t0;
 				
 		/* main simulation loop */
 		
-		while (true){			
-		
-			/* if the player ball is stopped and 5 secs have elapsed, then kick the player ball */
+		while (true){
 
-			if (pb.getVel().abs() < 0.05 && System.currentTimeMillis() - lastKickTime > 2000) {
-				var angle = rand.nextDouble()*Math.PI*0.25;
-				var v = new V2d(Math.cos(angle),Math.sin(angle)).mul(1.5);
-				pb.kick(v);
-				lastKickTime = System.currentTimeMillis();
-			}
-			
+			lastKickTime = kickStoppedBall(pb, rand, lastKickTime);
+
+			lastKickTime = kickStoppedBall(bb, rand, lastKickTime);
+
 			/* update board state */
 			
 			long elapsed = System.currentTimeMillis() - lastUpdateTime;
@@ -69,7 +65,25 @@ public class Sketch01 {
 			
 		}
 	}
-	
+
+	/**
+	 *
+	 * 	if player/bot ball is stopped and 5 secs have elapsed, then kick the ball
+	 * @param ball to kick
+	 * @param rand
+	 * @param lastKickTime of the ball
+	 * @return
+	 */
+	private static long kickStoppedBall(Ball ball, Random rand, long lastKickTime) {
+		if (ball.getVel().abs() < 0.05 && System.currentTimeMillis() - lastKickTime > 2000) {
+			var angle = rand.nextDouble()*Math.PI*0.25;
+			var v = new V2d(Math.cos(angle),Math.sin(angle)).mul(1.5);
+			ball.kick(v);
+			lastKickTime = System.currentTimeMillis();
+		}
+		return lastKickTime;
+	}
+
 	private static void waitAbit() {
 		try {
 			Thread.sleep(2000);

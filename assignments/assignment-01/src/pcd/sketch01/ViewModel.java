@@ -6,8 +6,8 @@ record BallViewInfo(P2d pos, double radius) {}
 
 public class ViewModel {
 
-	private ArrayList<BallViewInfo> balls;
-	private BallViewInfo player;
+	private final ArrayList<BallViewInfo> balls;
+	private BallViewInfo player, bot;
 	private int framePerSec;
 	
 	public ViewModel() {
@@ -22,7 +22,9 @@ public class ViewModel {
 		}
 		this.framePerSec = framePerSec;
 		var p = board.getPlayerBall();
+		var b =  board.getBotBall();
 		player = new BallViewInfo(p.getPos(), p.getRadius());
+		bot = new BallViewInfo(b.getPos(), b.getRadius());
 	}
 	
 	public synchronized ArrayList<BallViewInfo> getBalls(){
@@ -39,5 +41,9 @@ public class ViewModel {
 	public synchronized BallViewInfo getPlayerBall() {
 		return player;
 	}
-	
+
+	public synchronized BallViewInfo getBotBall() {
+		return bot;
+	}
+
 }
