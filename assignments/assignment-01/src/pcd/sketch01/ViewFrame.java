@@ -77,8 +77,24 @@ public class ViewFrame extends JFrame {
             }
         }
 
+        /**
+         * Draws a hole on the graphics context.
+         * @param g2 the Graphics2D object to draw on
+         * @param hole the HoleViewInfo containing position and radius
+         */
+        private void drawHole(Graphics2D g2, HoleViewInfo hole) {
+            if (hole != null) {
+                var p1 = hole.pos();
+                int x0 = (int)(ox + p1.x()*delta);
+                int y0 = (int)(oy - p1.y()*delta);
+                int radiusX = (int)(hole.radius()*delta);
+                int radiusY = (int)(hole.radius()*delta);
+                g2.fillOval(x0 - radiusX, y0 - radiusY, radiusX*2, radiusY*2);
+            }
+        }
+
         public void paint(Graphics g){
-    		Graphics2D g2 = (Graphics2D) g;
+            Graphics2D g2 = (Graphics2D) g;
     		
     		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
     		          RenderingHints.VALUE_ANTIALIAS_ON);
@@ -92,16 +108,30 @@ public class ViewFrame extends JFrame {
     		g2.drawLine(0,oy,ox*2,oy);
     		g2.setColor(Color.BLACK);
     		
-	    		for (var b: model.getBalls()) {
-	    		    drawBallWithLabel(g2, b, 1, "");
-	    		}
-	
-    		    drawBallWithLabel(g2, model.getPlayerBall(), 3, "H");
-    		    drawBallWithLabel(g2, model.getBotBall(), 3, "B");
+            // Draw small balls
+            for (var b: model.getBalls()) {
+                drawBallWithLabel(g2, b, 1, "");
+            }
+            // Draw holes
+            g2.setColor(Color.BLACK);
+            for (var h: model.getHoles()) {
+                drawHole(g2, h);
+            }
+            // Draw scores
+            g2.setColor(Color.BLUE);
+            var oldFont = g2.getFont();
+            g2.setFont(oldFont.deriveFont(64f));
+            g2.drawString(Integer.toString(model.getPlayerScore()), 60, 540);
+            g2.drawString(Integer.toString(model.getBotScore()), getWidth() - 120, 540);
+            g2.setFont(oldFont); // Restore font for the rest
+            // Draw player and bot balls
+            g2.setColor(Color.BLACK);
+            drawBallWithLabel(g2, model.getPlayerBall(), 3, "H");
+            drawBallWithLabel(g2, model.getBotBall(), 3, "B");
     		    
     		    g2.setStroke(new BasicStroke(1));
-	    		g2.drawString("Num small balls: " + model.getBalls().size(), 20, 40);
-	    		g2.drawString("Frame per sec: " + model.getFramePerSec(), 20, 60);
+	    		g2.drawString("Num small balls: " + model.getBalls().size(), 200, 40);
+	    		g2.drawString("Frame per sec: " + model.getFramePerSec(), 200, 60);
 
 	    		sync.notifyFrameRendered();
         }

@@ -7,7 +7,7 @@ public class MinimalBoardConf implements BoardConf {
 
 	@Override
 	public Ball getPlayerBall() {
-    	return new Ball(new P2d(-0.5, 0), 0.06, 1, new V2d(0,0.5));
+    	return new Ball(new P2d(-0.5,0), 0.06, 1, new V2d(0,0.5));
 	}
 
 	@Override
@@ -21,6 +21,14 @@ public class MinimalBoardConf implements BoardConf {
     	balls.add(b1);
     	balls.add(b2);
     	return balls;
+	}
+
+	@Override
+	public List<Hole> getHoles() {
+		var holes = new ArrayList<Hole>();
+		holes.add(new Hole(new P2d(-1.35, 0.85), 0.1));
+		holes.add(new Hole(new P2d(1.35, 0.85), 0.1));
+		return holes;
 	}
 
 	@Override

@@ -11,4 +11,6 @@ public interface BoardConf {
 	Ball getBotBall();
 	
 	List<Ball> getSmallBalls();
+
+	List<Hole> getHoles();
 }

@@ -29,6 +29,14 @@ public class LargeBoardConf implements BoardConf {
     	return balls;
 	}
 
+	@Override
+	public List<Hole> getHoles() {
+		var holes = new ArrayList<Hole>();
+		holes.add(new Hole(new P2d(-1.45, 0.95), 0.3));
+		holes.add(new Hole(new P2d(1.45, 0.95), 0.3));
+		return holes;
+	}
+
 	public Boundary getBoardBoundary() {
         return new Boundary(-1.5,-1.0,1.5,1.0);
 	}

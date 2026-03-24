@@ -7,7 +7,11 @@ public class Board {
     private List<Ball> balls;    
     private Ball playerBall;
     private Ball botBall;
+    private List<Hole> holes;
     private Boundary bounds;
+    
+    private int playerScore = 0;
+    private int botScore = 0;
     
     public Board(){} 
     
@@ -15,6 +19,7 @@ public class Board {
     	balls = conf.getSmallBalls();    	
     	playerBall = conf.getPlayerBall();
         botBall = conf.getBotBall();
+        holes = conf.getHoles();
     	bounds = conf.getBoardBoundary();
     }
     
@@ -53,9 +58,18 @@ public class Board {
     	return playerBall;
     }
 
-    public Ball getBotBall() { return botBall; }
+    public Ball getBotBall() {return botBall;}
+
+    public List<Hole> getHoles() { return holes; }
     
     public  Boundary getBounds(){
         return bounds;
     }
+    
+    public int getPlayerScore() { return playerScore; }
+    public int getBotScore() { return botScore; }
+    
+    // Add methods to increment scores (to be used in game logic)
+    public void incrementPlayerScore() { playerScore++; }
+    public void incrementBotScore() { botScore++; }
 }
