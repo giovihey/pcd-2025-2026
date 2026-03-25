@@ -1,85 +1,93 @@
 package pcd.sketch01;
 
 /**
- * GameManager gestisce lo stato del gioco e determina le condizioni di fine partita
+ * GameManager handles the game state and determines end-of-game conditions.
  */
 public class GameManager {
-    
+
     private final Board board;
     private boolean gameEnded = false;
     private String winner = null;
-    
+
     public GameManager(Board board) {
         this.board = board;
     }
-    
+
     /**
-     * Aggiorna lo stato del gioco e controlla le condizioni di fine partita
+     * Updates the game state and checks for end-of-game conditions.
      */
     public void updateGameState() {
         if (gameEnded) {
             return;
         }
-        
+
         checkGameEndConditions();
     }
-    
+
     /**
-     * Verifica le condizioni di fine partita:
-     * 1. Se la palla del player è dentro un buco -> bot vince
-     * 2. Se la palla del bot è dentro un buco -> player vince
-     * 3. Se non ci sono più small balls -> vince chi ha più punti
+     * Checks end-of-game conditions:
+     * 1. If the player's ball is inside a hole -> bot wins
+     * 2. If the bot's ball is inside a hole -> player wins
+     * 3. If there are no more small balls -> the player with the highest score wins
      */
     private void checkGameEndConditions() {
         Ball playerBall = board.getPlayerBall();
         Ball botBall = board.getBotBall();
-        
-        // Condizione 1 e 2: controllare se le palle dei player finiscono nei buchi
+
+        // Conditions 1 & 2: check if either main ball has fallen into a hole
         for (Hole hole : board.getHoles()) {
-            double distPlayer = Math.hypot(
-                playerBall.getPos().x() - hole.getPos().x(),
-                playerBall.getPos().y() - hole.getPos().y()
-            );
-            if (distPlayer < hole.getRadius()) {
-                gameEnded = true;
-                winner = "BOT";
+            if (isBallInHole(playerBall, hole)) {
+                endGame("BOT");
                 return;
             }
-            
-            double distBot = Math.hypot(
-                botBall.getPos().x() - hole.getPos().x(),
-                botBall.getPos().y() - hole.getPos().y()
-            );
-            if (distBot < hole.getRadius()) {
-                gameEnded = true;
-                winner = "PLAYER";
+            if (isBallInHole(botBall, hole)) {
+                endGame("PLAYER");
                 return;
             }
         }
-        
-        // Condizione 3: controllare se non ci sono più small balls
+
+        // Condition 3: no small balls remaining — winner is determined by score
         if (board.getBalls().isEmpty()) {
-            gameEnded = true;
             int playerScore = board.getPlayerScore();
             int botScore = board.getBotScore();
+
             if (playerScore > botScore) {
-                winner = "PLAYER";
+                endGame("PLAYER");
             } else if (botScore > playerScore) {
-                winner = "BOT";
+                endGame("BOT");
             } else {
-                winner = "DRAW";
+                endGame("DRAW");
             }
         }
     }
-    
+
+    /**
+     * Returns true if the given ball is fully inside the given hole.
+     */
+    private boolean isBallInHole(Ball ball, Hole hole) {
+        double dist = Math.hypot(
+                ball.getPos().x() - hole.pos().x(),
+                ball.getPos().y() - hole.pos().y()
+        );
+        return dist <= hole.radius() - ball.getRadius();
+    }
+
+    /**
+     * Marks the game as ended and sets the winner.
+     */
+    private void endGame(String winner) {
+        this.gameEnded = true;
+        this.winner = winner;
+    }
+
     public boolean isGameEnded() {
         return gameEnded;
     }
-    
+
     public String getWinner() {
         return winner;
     }
-    
+
     public void printGameResult() {
         if (gameEnded) {
             System.out.println("\n=== GAME OVER ===");
@@ -89,4 +97,3 @@ public class GameManager {
         }
     }
 }
-

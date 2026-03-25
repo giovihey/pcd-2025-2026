@@ -41,7 +41,7 @@ public class Ball {
      * 
      * Keep the ball inside the boundaries, updating the velocity in the case of bounces
      * 
-     * @param ctx
+     * @param ctx the board of the game
      */
     private void applyBoundaryConstraints(Board ctx){
         Boundary bounds = ctx.getBounds();

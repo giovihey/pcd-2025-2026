@@ -5,19 +5,19 @@ import java.awt.event.KeyEvent;
 import javax.swing.JFrame;
 
 /**
- * InputController gestisce l'input da tastiera del player
+ * InputController handles keyboard input from the player.
  */
 public class InputController {
-    
+
     private final Ball playerBall;
-    
+
     public InputController(Ball playerBall) {
         this.playerBall = playerBall;
     }
-    
+
     /**
-     * Registra il KeyListener sulla frame per gestire i tasti freccia
-     * @param frame la JFrame sulla quale registrare il listener
+     * Registers a KeyListener on the frame to handle arrow key events.
+     * @param frame the JFrame on which to register the listener
      */
     public void registerKeyListener(JFrame frame) {
         frame.addKeyListener(new KeyAdapter() {
@@ -26,16 +26,18 @@ public class InputController {
                 handleKeyPressed(e);
             }
         });
-        // Assicura che il focus sia sulla frame per ricevere gli eventi
+        // Ensure the frame has focus so it can receive key events
         frame.setFocusable(true);
+        frame.requestFocusInWindow();
     }
-    
+
     /**
-     * Gestisce la pressione dei tasti freccia
-     * UP: aggiunge impulso (0, 1) alla velocità
-     * DOWN: aggiunge impulso (0, -1) alla velocità
-     * LEFT: aggiunge impulso (-1, 0) alla velocità
-     * RIGHT: aggiunge impulso (1, 0) alla velocità
+     * Handles arrow key presses and applies an impulse to the player's ball.
+     * UP:    applies impulse (0,  1)
+     * DOWN:  applies impulse (0, -1)
+     * LEFT:  applies impulse (-1, 0)
+     * RIGHT: applies impulse ( 1, 0)
+     * Any other key is ignored.
      */
     private void handleKeyPressed(KeyEvent e) {
         V2d impulse = switch (e.getKeyCode()) {
@@ -46,12 +48,9 @@ public class InputController {
             default -> null;
         };
 
+        // Only kick if a valid arrow key was pressed
         if (impulse != null) {
-            // Somma l'impulso alla velocità attuale della palla
-            V2d currentVel = playerBall.getVel();
-            V2d newVel = currentVel.sum(impulse);
-            playerBall.kick(newVel);
+            playerBall.kick(impulse);
         }
     }
 }
-

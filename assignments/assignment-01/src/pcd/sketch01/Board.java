@@ -43,10 +43,10 @@ public class Board {
         while (it.hasNext()) {
             Ball ball = it.next();
             for (Hole hole : holes) {
-                double dx   = ball.getPos().x() - hole.getPos().x();
-                double dy   = ball.getPos().y() - hole.getPos().y();
+                double dx   = ball.getPos().x() - hole.pos().x();
+                double dy   = ball.getPos().y() - hole.pos().y();
                 double dist = Math.hypot(dx, dy);
-                if (dist < hole.getRadius()) {
+                if (dist < hole.radius()) {
                     if      (ball.getLastHitter() == Hitter.PLAYER) incrementPlayerScore();
                     else if (ball.getLastHitter() == Hitter.BOT)    incrementBotScore();
                     it.remove();

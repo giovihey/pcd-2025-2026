@@ -7,8 +7,8 @@ record HoleViewInfo(P2d pos, double radius) {}
 
 public class ViewModel {
 
-	private ArrayList<BallViewInfo> balls;
-	private ArrayList<HoleViewInfo> holes;
+	private final ArrayList<BallViewInfo> balls;
+	private final ArrayList<HoleViewInfo> holes;
 	private BallViewInfo player, bot;
 	private int framePerSec;
 	private int playerScore, botScore;
@@ -26,7 +26,7 @@ public class ViewModel {
 		}
 		holes.clear();
 		for (var h: board.getHoles()) {
-			holes.add(new HoleViewInfo(h.getPos(), h.getRadius()));
+			holes.add(new HoleViewInfo(h.pos(), h.radius()));
 		}
 		this.framePerSec = framePerSec;
 		this.playerScore = board.getPlayerScore();

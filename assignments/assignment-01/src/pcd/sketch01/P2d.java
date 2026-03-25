@@ -18,8 +18,6 @@ public record P2d(double x, double y)  {
     	return x;
     }
 
-    public double y() {
-    	return y;
-    }
+    public double y() { return y; }
 }
 
