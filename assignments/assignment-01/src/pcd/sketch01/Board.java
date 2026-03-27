@@ -10,17 +10,45 @@ public class Board {
     private List<Hole> holes;
     private Boundary bounds;
 
+    private BarrierSynch barrier;
+    private List<WorkerSynch> synchWorkers;
+    private List<WorkerForCollision>  workers;
+
     private int playerScore = 0;
     private int botScore = 0;
-    
+
     public Board(){} 
     
     public void init(BoardConf conf) {
-    	balls = conf.getSmallBalls();    	
-    	playerBall = conf.getPlayerBall();
-        botBall = conf.getBotBall();
-        holes = conf.getHoles();
-    	bounds = conf.getBoardBoundary();
+    	this.balls = conf.getSmallBalls();
+    	this.playerBall = conf.getPlayerBall();
+        this.botBall = conf.getBotBall();
+        this.holes = conf.getHoles();
+    	this.bounds = conf.getBoardBoundary();
+        int nWorkers = Math.min(
+                Runtime.getRuntime().availableProcessors(),
+                balls.size()
+        );
+        this.barrier = new BarrierSynch(nWorkers + 1);
+
+        this.synchWorkers = new  ArrayList<>();
+        this.workers = new  ArrayList<>();
+
+        int chunkSize = balls.size() / nWorkers;
+        for (int i = 0; i < nWorkers; i++) {
+            int from = i * chunkSize;
+            int to = (i == nWorkers - 1) ? balls.size() : from + chunkSize;
+            // last worker takes the remainder
+
+            WorkerSynch startSynch = new WorkerSynch();
+            WorkerForCollision worker = new WorkerForCollision(barrier, startSynch, balls, from, to, this);
+            synchWorkers.add(startSynch);
+            workers.add(worker);
+            worker.start();
+        }
+
+        System.out.println("nWorkers: " + nWorkers + ", barrier participants: " + (nWorkers + 1));
+        System.out.println("balls.size(): " + balls.size());
     }
 
     public void updateState(long dt) {
@@ -29,9 +57,13 @@ public class Board {
 
         for (var b : balls) b.updateState(dt, this);
 
-        for (int i = 0; i < balls.size() - 1; i++)
-            for (int j = i + 1; j < balls.size(); j++)
-                Ball.resolveCollision(balls.get(i), balls.get(j), this);
+        // signal all workers and wait for them at the barrier
+        for (var s : synchWorkers) s.signal();
+        try {
+            barrier.hitAndWaitAll();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
 
         for (var b : balls) Ball.resolveCollision(playerBall, b, this);
         for (var b : balls) Ball.resolveCollision(botBall, b, this);
