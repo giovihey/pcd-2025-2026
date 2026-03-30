@@ -12,8 +12,8 @@ public class Sketch01 {
 		 */
 		
 		//var boardConf = new MinimalBoardConf();
-		var boardConf = new LargeBoardConf();
-		// var boardConf = new MassiveBoardConf();
+		//var boardConf = new LargeBoardConf();
+		 var boardConf = new MassiveBoardConf();
 
 		Board board = new Board();
 		board.init(boardConf);
@@ -31,14 +31,14 @@ public class Sketch01 {
 		// Setup bot controller per gestire il movimento del bot
 		long t0 = System.currentTimeMillis();
 		var botController = new BotController(board.getBotBall(), t0);
-		
+
 		viewModel.update(board, 0);			
 		view.render();
 		waitAbit();
 
 		int nFrames = 0;
 		long lastUpdateTime = System.currentTimeMillis();
-				
+
 		/* main simulation loop */
 		while (!gameManager.isGameEnded()){
 			// Update bot controller
@@ -46,12 +46,12 @@ public class Sketch01 {
 
 			/* update board state */
 			long elapsed = System.currentTimeMillis() - lastUpdateTime;
-			lastUpdateTime = System.currentTimeMillis();			
+			lastUpdateTime = System.currentTimeMillis();
 			board.updateState(elapsed);
-			
+
 			/* check game end conditions */
 			gameManager.updateGameState();
-			
+
 			/* render */
 			nFrames++;
 			int framePerSec = 0;
@@ -60,9 +60,9 @@ public class Sketch01 {
 				framePerSec = (int)(nFrames*1000/dt);
 			}
 
-			viewModel.update(board, framePerSec);			
+			viewModel.update(board, framePerSec);
 			view.render();
-			
+
 		}
 		
 		// Print game result and exit

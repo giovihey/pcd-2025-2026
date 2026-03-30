@@ -26,10 +26,10 @@ public class WorkerForCollision extends Thread {
         while (alive) {
             try {
                 startSynch.waitForStart();
-                System.out.println("startSynch.waitForStart()");// sleep until simulation signals
+                //System.out.println("startSynch.waitForStart()");// sleep until simulation signals
                 resolvePartition();                // do the work
                 barrier.hitAndWaitAll();
-                System.out.println("barrier.hitAndWaitAll();");// meet simulation thread
+                //System.out.println("barrier.hitAndWaitAll();");// meet simulation thread
             } catch (InterruptedException e) {
                 alive = false;
             } catch (Exception e) {
@@ -40,9 +40,12 @@ public class WorkerForCollision extends Thread {
     }
 
     private void resolvePartition() {
-        System.out.println("start Synch.resolvePartition()");
-        for (int i = fromIndex; i < toIndex - 1; i++)
-            for (int j = i + 1; j < toIndex; j++)
+        //System.out.println("start Synch.resolvePartition()");
+        int currentSize = balls.size();
+        int safeTo = Math.min(toIndex, currentSize);
+        int safeFrom = Math.min(fromIndex, currentSize);
+        for (int i = safeFrom; i < safeTo - 1; i++)
+            for (int j = i + 1; j < safeTo; j++)
                 Ball.resolveCollision(balls.get(i), balls.get(j), board);
     }
 

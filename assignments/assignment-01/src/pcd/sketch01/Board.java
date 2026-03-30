@@ -46,9 +46,10 @@ public class Board {
             workers.add(worker);
             worker.start();
         }
-
+        /*
         System.out.println("nWorkers: " + nWorkers + ", barrier participants: " + (nWorkers + 1));
         System.out.println("balls.size(): " + balls.size());
+        */
     }
 
     public void updateState(long dt) {
@@ -79,8 +80,8 @@ public class Board {
                 double dy   = ball.getPos().y() - hole.pos().y();
                 double dist = Math.hypot(dx, dy);
                 if (dist < hole.radius()) {
-                    if      (ball.getLastHitter() == Hitter.PLAYER) incrementPlayerScore();
-                    else if (ball.getLastHitter() == Hitter.BOT)    incrementBotScore();
+                    if (ball.getLastHitter() == Hitter.PLAYER) incrementPlayerScore();
+                    else if (ball.getLastHitter() == Hitter.BOT) incrementBotScore();
                     it.remove();
                     break;
                 }

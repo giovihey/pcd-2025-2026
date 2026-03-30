@@ -14,10 +14,10 @@ public class BarrierSynch {
     public synchronized void hitAndWaitAll() throws InterruptedException {
         int myGeneration = generation;
         nArrived++;
-        System.out.println("nArrived: " + nArrived);
+        //System.out.println("nArrived: " + nArrived);
         if  (nArrived < nParticipants) {
             while (generation == myGeneration) {
-                System.out.println("waiting");
+               // System.out.println("waiting");
             // ← wait until generation changes
                 wait();
             }
@@ -25,7 +25,7 @@ public class BarrierSynch {
             nArrived = 0;
             generation++;
             notifyAll();
-            System.out.println("Notify all barrier hitAndWaitAll");
+            //System.out.println("Notify all barrier hitAndWaitAll");
         }
     }
 }
