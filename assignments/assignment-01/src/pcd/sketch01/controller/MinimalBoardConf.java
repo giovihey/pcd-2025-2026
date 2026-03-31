@@ -1,4 +1,6 @@
-package pcd.sketch01;
+package pcd.sketch01.controller;
+
+import pcd.sketch01.model.*;
 
 import java.util.ArrayList;
 import java.util.List;

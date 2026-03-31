@@ -1,4 +1,4 @@
-package pcd.sketch01;
+package pcd.sketch01.model;
 
 /**
  * GameManager handles the game state and determines end-of-game conditions.

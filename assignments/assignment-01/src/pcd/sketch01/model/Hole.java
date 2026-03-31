@@ -1,3 +1,3 @@
-package pcd.sketch01;
+package pcd.sketch01.model;
 
 public record Hole(P2d pos, double radius) {}

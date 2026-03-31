@@ -1,4 +1,4 @@
-package pcd.sketch01;
+package pcd.sketch01.util;
 
 public class BarrierSynch {
     private final int nParticipants;

@@ -1,4 +1,8 @@
-package pcd.sketch01;
+package pcd.sketch01.model;
+
+import pcd.sketch01.util.BarrierSynch;
+import pcd.sketch01.util.WorkerForCollision;
+import pcd.sketch01.util.WorkerSynch;
 
 import java.util.*;
 

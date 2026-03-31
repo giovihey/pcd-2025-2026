@@ -1,4 +1,4 @@
-package pcd.sketch01;
+package pcd.sketch01.view;
 
 
 public class View {

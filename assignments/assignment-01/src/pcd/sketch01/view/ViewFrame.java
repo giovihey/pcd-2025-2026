@@ -1,4 +1,6 @@
-package pcd.sketch01;
+package pcd.sketch01.view;
+
+import pcd.sketch01.util.RenderSynch;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
