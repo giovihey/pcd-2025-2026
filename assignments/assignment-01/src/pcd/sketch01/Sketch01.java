@@ -1,6 +1,7 @@
 package pcd.sketch01;
 
 import pcd.sketch01.controller.GameController;
+import pcd.sketch01.controller.LargeBoardConf;
 import pcd.sketch01.controller.MassiveBoardConf;
 import pcd.sketch01.model.Board;
 import pcd.sketch01.view.View;
@@ -19,7 +20,7 @@ public class Sketch01 {
 		
 		//var boardConf = new MinimalBoardConf();
 		//var boardConf = new LargeBoardConf();
-		 var boardConf = new MassiveBoardConf();
+		var boardConf = new MassiveBoardConf();
 
 		Board board = new Board();
 		board.init(boardConf);
