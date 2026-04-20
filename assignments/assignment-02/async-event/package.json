@@ -1,0 +1,14 @@
+{
+  "name": "@fsstatlib/eventloop",
+  "version": "0.1.0",
+  "description": "FSStatLib — async event-loop implementation",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "clean": "node -e \"fs.rmSync('node_modules',{recursive:true,force:true})\""
+  }
+}

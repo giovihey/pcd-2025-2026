@@ -1,0 +1,24 @@
+{
+  "name": "fsstatlib",
+  "version": "0.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "start:eventloop": "node async-event/src/index.js",
+    "clean": "node --run clean --workspaces"
+  },
+  "devDependencies": {
+    "prettier": "3.8.3"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "prettier": {
+    "semi": false,
+    "singleQuote": true,
+    "trailingComma": "all",
+    "printWidth": 100
+  }
+}
