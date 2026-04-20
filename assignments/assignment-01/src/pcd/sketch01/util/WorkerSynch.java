@@ -1,17 +1,17 @@
 package pcd.sketch01.util;
 
 public class WorkerSynch {
-    private boolean startSignal = false;
+    private int generation = 0;
 
     public synchronized void waitForStart() throws InterruptedException {
-        while (!startSignal) {
+        int myGen = generation;
+        while (generation == myGen) {
             wait();
         }
-        startSignal = false; // consume the signal
     }
 
     public synchronized void signal() {
-        startSignal = true;
+        generation++;
         notifyAll();
     }
 }

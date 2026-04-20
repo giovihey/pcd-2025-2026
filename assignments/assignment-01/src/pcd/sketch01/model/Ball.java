@@ -2,7 +2,7 @@ package pcd.sketch01.model;
 
 public class Ball {
 
-    private static final double FRICTION_FACTOR    = 0.25;
+    private static final double FRICTION_FACTOR    = 0.10;
     private static final double RESTITUTION_FACTOR = 1;
 
     private P2d pos;
@@ -107,8 +107,8 @@ public class Ball {
     }
 
     private static void trackLastHitter(Ball small, Ball hitter, Board ctx) {
-        if (hitter == ctx.getPlayerBall()) small.lastHitter = Hitter.PLAYER;
-        else if (hitter == ctx.getBotBall()) small.lastHitter = Hitter.BOT;
+        if (hitter == ctx.getPlayerBall()) small.setLastHitter(Hitter.PLAYER);
+        else if (hitter == ctx.getBotBall()) small.setLastHitter(Hitter.BOT);
     }
 
     public P2d getPos() {

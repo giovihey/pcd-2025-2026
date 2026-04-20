@@ -16,15 +16,14 @@ public class Board {
     private List<Hole> holes;
     private Boundary bounds;
 
-    // GRID FIELDS (NEW)
-    private static final double CELL_SIZE = 25.0;  // Tune ~4x avg ball radius
+    // GRID FIELDS
+    private static final double CELL_SIZE = 0.1;
     private int COLS, ROWS;
     private final ConcurrentHashMap<Integer, List<Ball>> grid = new ConcurrentHashMap<>();
 
-    // EXISTING CONCURRENCY (reused)
     private BarrierSynch barrier;
     private List<WorkerSynch> synchWorkers = new ArrayList<>();
-    private List<Thread> workers = new ArrayList<>();  // Now GridWorkers
+    private List<Thread> workers = new ArrayList<>();
 
     private int playerScore = 0;
     private int botScore = 0;
@@ -39,10 +38,10 @@ public class Board {
         this.bounds = conf.getBoardBoundary();
 
         // GRID SETUP
-        this.COLS = (int) (bounds.x1() / CELL_SIZE) + 1;
-        this.ROWS = (int) (bounds.y1() / CELL_SIZE) + 1;
+        this.COLS = (int)((bounds.x1() - bounds.x0()) / CELL_SIZE) + 1;
+        this.ROWS = (int)((bounds.y1() - bounds.y0()) / CELL_SIZE) + 1;
 
-        // WORKERS: One per row-chunk (platform threads)
+        // WORKERS: One per row-chunk
         int nWorkers = Math.min(Runtime.getRuntime().availableProcessors(), ROWS);
         this.barrier = new BarrierSynch(nWorkers + 1);
         int rowChunk = ROWS / nWorkers;
@@ -65,7 +64,7 @@ public class Board {
             b.updateState(dt, this);
         }
 
-        // PARALLEL GRID COLLISIONS (NEW)
+        // PARALLEL GRID COLLISIONS
         buildGrid();
         for (var s : synchWorkers) {
             s.signal();
@@ -77,14 +76,13 @@ public class Board {
             return;
         }
 
-        // Sequential polish (low cost)
         for (var b : balls) {
             Ball.resolveCollision(playerBall, b, this);
             Ball.resolveCollision(botBall, b, this);
         }
         Ball.resolveCollision(playerBall, botBall, this);
 
-        // Holes/scoring (serial)
+        // Holes/scoring
         Iterator<Ball> it = balls.iterator();
         while (it.hasNext()) {
             Ball ball = it.next();
@@ -105,30 +103,20 @@ public class Board {
         }
     }
 
-    // NEW: O(n) grid build (main thread)
     private void buildGrid() {
-        grid.clear();
-        for (Ball b : balls) {
-            int cx = Math.floorDiv((int) b.getPos().x(), (int) CELL_SIZE);
-            int cy = Math.floorDiv((int) b.getPos().y(), (int) CELL_SIZE);
-            cx = (cx % COLS + COLS) % COLS;  // Wrap toroidal if needed
+        for (List<Ball> cell : grid.values()) cell.clear();
+        List<Ball> allBalls = new ArrayList<>(balls);
+        for (Ball b : allBalls) {
+            int cx = (int) Math.floor((b.getPos().x() - bounds.x0()) / CELL_SIZE);
+            int cy = (int) Math.floor((b.getPos().y() - bounds.y0()) / CELL_SIZE);
             int key = cx + cy * COLS;
             grid.computeIfAbsent(key, k -> new ArrayList<>()).add(b);
         }
     }
 
-    // GETTERS FOR GRIDWORKER
     public int getCOLS() { return COLS; }
     public int getROWS() { return ROWS; }
 
-    // Shutdown (call from GameController)
-    public void shutdownWorkers() {
-        for (Thread w : workers) {
-            ((GridWorker) w).shutdown();
-        }
-    }
-
-    // Unchanged getters
     public List<Ball> getBalls() { return balls; }
     public Ball getPlayerBall() { return playerBall; }
     public Ball getBotBall() { return botBall; }

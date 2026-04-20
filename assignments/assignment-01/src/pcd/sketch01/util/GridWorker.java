@@ -11,7 +11,6 @@ public class GridWorker extends Thread {
     private final ConcurrentHashMap<Integer, List<Ball>> grid;
     private final int startRow, endRow;
     private final Board board;
-    private volatile boolean alive = true;
 
     public GridWorker(BarrierSynch barrier, WorkerSynch startSynch,
                       ConcurrentHashMap<Integer, List<Ball>> grid,
@@ -26,13 +25,13 @@ public class GridWorker extends Thread {
 
     @Override
     public void run() {
-        while (alive) {
+        while (!Thread.currentThread().isInterrupted()) {
             try {
                 startSynch.waitForStart();
                 resolveGridRows();
                 barrier.hitAndWaitAll();
             } catch (InterruptedException e) {
-                alive = false;
+                Thread.currentThread().interrupt();
             }
         }
     }
@@ -71,6 +70,8 @@ public class GridWorker extends Thread {
                     int nx = col + offset[0];
                     int ny = row + offset[1];
                     if (nx < 0 || nx >= cols || ny < 0 || ny >= rows) continue;
+                    if (ny < startRow || ny >= endRow) continue;
+
                     int nkey = nx + ny * cols;
                     List<Ball> neigh = grid.get(nkey);
                     if (neigh == null || neigh.isEmpty()) continue;
@@ -92,6 +93,4 @@ public class GridWorker extends Thread {
         double r = a.getRadius() + b.getRadius();
         return dx * dx + dy * dy < r * r;
     }
-
-    public void shutdown() { alive = false; }
 }
