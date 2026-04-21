@@ -1,4 +1,4 @@
-import { readdir, stat } from 'node:fs/promises'
+import { readdir, lstat } from 'node:fs/promises'
 import { join } from 'node:path'
 
 export async function walkDir(dir, onFile, onError) {
@@ -15,11 +15,12 @@ export async function walkDir(dir, onFile, onError) {
       const fullPath = join(dir, entry)
       let stats
       try {
-        stats = await stat(fullPath)
+        stats = await lstat(fullPath)
       } catch (err) {
         onError(err)
         return
       }
+      if (stats.isSymbolicLink()) return //add for symbolic link in windows
       if (stats.isDirectory()) {
         await walkDir(fullPath, onFile, onError)
       } else {
