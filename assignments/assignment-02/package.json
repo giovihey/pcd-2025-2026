@@ -7,6 +7,7 @@
   ],
   "scripts": {
     "start:eventloop": "node async-event/index.js",
+    "start:reactive": "node reactive/index.js",
     "clean": "node --run clean --workspaces"
   },
   "devDependencies": {
