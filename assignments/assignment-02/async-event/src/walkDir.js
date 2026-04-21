@@ -1,40 +1,30 @@
-import { readdir, stat } from 'node:fs'
+import { readdir, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 
-export function walkDir(dir, onFile, onError, onDone) {
-  let pending = 0
-  function maybeFinish() {
-    pending--
-    if (pending === 0) onDone()
+export async function walkDir(dir, onFile, onError) {
+  let entries
+  try {
+    entries = await readdir(dir)
+  } catch (err) {
+    onError(err)
+    return
   }
-  function walk(currentDir) {
-    pending++
-    readdir(currentDir, (err, entries) => {
-      if (err) {
-        onError(err)
-        maybeFinish()
-        return
-      }
-      if (entries.length === 0) {
-        maybeFinish()
-        return
-      }
 
-      entries.forEach((entry) => {
-        const fullPath = join(currentDir, entry)
-        pending++
-        stat(fullPath, (err, stats) => {
-          if (err) {
-            onError(err)
-            maybeFinish()
-            return
-          }
-          stats.isDirectory() ? walk(fullPath) : onFile(fullPath, stats)
-          maybeFinish()
-        })
-      })
-      maybeFinish()
-    })
-  }
-  walk(dir)
+  await Promise.all(
+    entries.map(async (entry) => {
+      const fullPath = join(dir, entry)
+      let stats
+      try {
+        stats = await stat(fullPath)
+      } catch (err) {
+        onError(err)
+        return
+      }
+      if (stats.isDirectory()) {
+        await walkDir(fullPath, onFile, onError)
+      } else {
+        onFile(fullPath, stats)
+      }
+    }),
+  )
 }

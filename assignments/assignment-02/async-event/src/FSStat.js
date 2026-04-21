@@ -1,21 +1,15 @@
 import { walkDir } from './walkDir.js'
-import { ReportEmitter } from './ReportEmitter.js'
+import { ReportBuilder } from './ReportBuilder.js'
 
-/**
- * @param {string} D
- * @param {number} maxFs
- * @param {number} NB
- * @returns {ReportEmitter}
- */
-export function getFSReport(D, maxFs, NB) {
-  const emitter = new ReportEmitter(maxFs, NB)
+export async function getFSReport(D, maxFs, NB) {
+  const builder = new ReportBuilder(maxFs, NB)
+  const errors = []
 
-  walkDir(
+  await walkDir(
     D,
-    (filePath, stats) => emitter.recordFile(filePath, stats),
-    (err) => emitter.emit('error', err),
-    () => emitter.emit('done', emitter.buildReport()),
+    (filePath, stats) => builder.recordFile(filePath, stats),
+    (err) => errors.push(err),
   )
 
-  return emitter
+  return { ...builder.buildReport(), errors }
 }
