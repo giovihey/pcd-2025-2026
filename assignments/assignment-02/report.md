@@ -52,7 +52,19 @@ Blocking here is intentional and cheap: virtual threads yield their carrier thre
 
 ---
 
-## 3. Comparison Summary
+## 3. Optional Extension — Interactive GUI
+
+The interactive GUI is built on top of the **reactive version**, which is the natural fit: `getFSReport` already emits a live stream of intermediate report snapshots via `scan`, so attaching a GUI requires no changes to the library itself.
+
+**Architecture.** A lightweight Node.js HTTP server (`server.js`) bridges the RxJS observable and the browser using **Server-Sent Events (SSE)**. When the user clicks Start, the browser opens a persistent `EventSource` connection to `/report`; the server subscribes to `getFSReport` and forwards each `scan` emission as an SSE `update` event. The browser receives each event and redraws the bar chart and file counter in real time. When the scan completes, the server sends a `complete` event and closes the connection.
+
+**Stop.** Clicking Stop sends a `POST /stop` to the server, which calls `subscription.unsubscribe()` on the active RxJS stream. This immediately halts the traversal mid-scan. The `EventSource` is also closed on the browser side so no further events are processed.
+
+**Throttling.** Because `scan` emits on every single file, large directories would flood the browser with hundreds of events per second, causing the UI to lag. A `throttleTime(100, undefined, { leading: true, trailing: true })` operator is inserted in the server's subscription pipeline, capping updates to at most one per 100 ms. The `trailing: true` option guarantees the final totals are always delivered even if the scan completes inside a silent window.
+
+---
+
+## 4. Comparison Summary
 
 | Aspect | Event-Loop | Reactive | Virtual Threads |
 |---|---|---|---|
