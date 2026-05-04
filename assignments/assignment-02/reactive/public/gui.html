@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FSStat — File System Report</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@300;400;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="shell">
+
+    <header>
+        <div class="logo">FS<span>Stat</span></div>
+        <div class="tagline">File System Statistics — Reactive Edition</div>
+    </header>
+
+    <!-- Input -->
+    <div class="panel">
+        <div class="panel-title">Parameters</div>
+        <div class="fields">
+            <div class="field">
+                <label>Directory (D)</label>
+                <input id="in-dir" type="text" placeholder="C:/Users/giovi/Documents" value="C:/Users/giovi/Documents" />
+            </div>
+            <div class="field">
+                <label>Max File Size (bytes)</label>
+                <input id="in-maxfs" type="number" placeholder="1000000" value="1000000" min="1" />
+            </div>
+            <div class="field">
+                <label>Bands (NB)</label>
+                <input id="in-nb" type="number" placeholder="5" value="5" min="1" max="50" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+        <button id="btn-start">▶ Start</button>
+        <button id="btn-stop">■ Stop</button>
+    </div>
+
+    <!-- Status -->
+    <div id="status">Ready</div>
+
+    <!-- Report -->
+    <div id="report">
+        <div class="stat-row">
+            <div class="stat-card">
+                <div class="stat-label">Total Files Found</div>
+                <div class="stat-value" id="val-total">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Overflow (&gt; MaxFS)</div>
+                <div class="stat-value" id="val-overflow" style="color:var(--warn)">0</div>
+            </div>
+        </div>
+
+        <div class="chart-panel">
+            <div class="chart-title">Size Distribution</div>
+            <div id="chart"></div>
+        </div>
+    </div>
+
+</div>
+<script src="app.js" defer></script>
+</body>
+</html>

@@ -8,7 +8,8 @@
     ".": "./src/FSStat.js"
   },
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "start:gui": "node server.js"
   },
   "dependencies": {
     "rxjs": "^7.8.2"
