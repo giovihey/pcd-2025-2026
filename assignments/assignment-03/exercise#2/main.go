@@ -5,18 +5,21 @@ import (
 )
 
 func main() {
-	fmt.Println("Hello world!")
-	//matchRounds := 3
-	//numsPlayer := 1 << matchRounds
+	matchRounds := 4
+	numPlayers := 1 << matchRounds
+	done := make(chan struct{})
 
-	//var channels []chan Msg
+	var channels []chan Msg
+	for i := 0; i < numPlayers; i++ {
+		ch := addPlayer(fmt.Sprintf("player-%d", i), done)
+		channels = append(channels, ch)
+	}
+	finalCh := spawnRound(channels, done)
 
-	ch1, done1 := addPlayer("player-1")
-	ch2, done2 := addPlayer("player-2")
+	// the last message on finalCh is the overall winner
+	winner := <-finalCh
+	fmt.Printf("Tournament winner: %s\n", winner.playerId)
 
-	go Match(ch1, ch2)
-
-	<-done1
-	<-done2
-	fmt.Println("Match done")
+	// signal all goroutines (players + match forwarders) to stop
+	close(done)
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"math/rand/v2"
 )
 
@@ -11,24 +10,33 @@ type Msg struct {
 	reply    chan bool
 }
 
-func Player(ch chan Msg, id string, done chan struct{}) {
-	replyCh := make(chan bool)
-	pick := rand.IntN(5) + 1
-	fmt.Printf("%s picks %d\n", id, pick)
-	ch <- Msg{value: pick, playerId: id, reply: replyCh}
+func Player(ch chan Msg, id string, done <-chan struct{}) {
+	for {
+		replyCh := make(chan bool)
+		pick := rand.IntN(5) + 1
 
-	won := <-replyCh
-	if won {
-		fmt.Printf("%s won!\n", id)
-	} else {
-		fmt.Printf("%s lost.\n", id)
+		// send pick — abort if tournament is over
+		select {
+		case ch <- Msg{value: pick, playerId: id, reply: replyCh}:
+		case <-done:
+			return
+		}
+
+		// wait for the match result — abort if tournament is over
+		select {
+		case won := <-replyCh:
+			if !won {
+				return // eliminated, stop playing
+			}
+			// won this round: loop and send a new pick for the next match
+		case <-done:
+			return
+		}
 	}
-	done <- struct{}{}
 }
 
-func addPlayer(id string) (chan Msg, chan struct{}) {
+func addPlayer(id string, done <-chan struct{}) chan Msg {
 	ch := make(chan Msg)
-	done := make(chan struct{})
 	go Player(ch, id, done)
-	return ch, done
+	return ch
 }
