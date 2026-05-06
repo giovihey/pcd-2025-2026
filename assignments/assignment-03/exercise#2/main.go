@@ -6,22 +6,17 @@ import (
 
 func main() {
 	fmt.Println("Hello world!")
-	matchRounds := 3
-	numsPlayer := 1 << matchRounds
+	//matchRounds := 3
+	//numsPlayer := 1 << matchRounds
 
-	var channels []chan Msg
+	//var channels []chan Msg
 
-	for i := 0; i < numsPlayer; i++ {
-		playerId := fmt.Sprintf("player-%d", i)
-		ch := addPlayer(playerId)
+	ch1, done1 := addPlayer("player-1")
+	ch2, done2 := addPlayer("player-2")
 
-		/* collecting player channels */
-		channels = append(channels, ch)
-	}
+	go Match(ch1, ch2)
 
-	/* receiving messages */
-	for i := 0; i < len(channels); i++ {
-		msg := <-channels[i]
-		fmt.Printf("%d from %s\n", msg.value, msg.playerId)
-	}
+	<-done1
+	<-done2
+	fmt.Println("Match done")
 }
