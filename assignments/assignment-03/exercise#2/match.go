@@ -54,8 +54,16 @@ func Match(channel1, channel2 chan Msg, round, matchIdx int, done <-chan struct{
 		}
 
 		// notify both players of the outcome
-		left.reply <- leftWins
-		right.reply <- !leftWins
+		select {
+		case left.reply <- leftWins:
+		case <-done:
+			return
+		}
+		select {
+		case right.reply <- !leftWins:
+		case <-done:
+			return
+		}
 
 		winner, loser := right.playerId, left.playerId
 		winnerCh := channel2
