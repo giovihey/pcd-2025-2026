@@ -6,6 +6,8 @@ v1.0.0-20260516
 
 ### Assignment #04 
  
+- [Description](https://github.com/pslab-unibo/pcd-2025-2026/tree/master/assignments/assignment-04)
+
 ### Distributed Object Computing -  Java RMI
 
 - [Java Remote Method Invocation](https://www.oracle.com/java/technologies/javase/remote-method-invocation-home.html)
