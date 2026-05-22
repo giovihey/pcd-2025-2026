@@ -2,6 +2,7 @@ plugins {
     scala
     application
 }
+
 repositories {
     mavenCentral()
 }
@@ -20,6 +21,12 @@ dependencies {
     // Test dependencies
     testImplementation("org.scalatest:scalatest_$scalaBinary:3.2.20")
     testImplementation("org.apache.pekko:pekko-actor-testkit-typed_$scalaBinary:$pekkoVersion")
+    testImplementation("co.helmethair:scalatest-junit-runner:0.2.0")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.11.4")
+}
+
+tasks.named<Test>("test") {
+    useJUnitPlatform()
 }
 
 application {
