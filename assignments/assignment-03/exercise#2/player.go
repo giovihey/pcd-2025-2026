@@ -1,41 +1,49 @@
 package main
 
-import (
-	"math/rand/v2"
+import "math/rand/v2"
+
+// Result is what a match tells a player about the game it has just played.
+type Result int
+
+const (
+	Lost     Result = iota // eliminated: stop playing
+	Won                    // won this round: send a new pick for the next one
+	Champion               // won the final: the tournament is over
 )
 
+// Msg is the only data exchanged between players and matches.
+// The reply channel is where the match sends the outcome back to the player
+// (the same request/reply pattern used for client-server interaction).
 type Msg struct {
 	value    int
-	playerId string
-	reply    chan bool
+	playerID string
+	reply    chan Result
 }
 
-func Player(ch chan Msg, id string, done <-chan struct{}) {
+// Player repeatedly sends a pick on out and waits for the outcome of the game,
+// until it is eliminated, becomes champion, or the tournament is cancelled.
+func Player(out chan<- Msg, id string, done <-chan struct{}) {
 	for {
-		replyCh := make(chan bool)
-		pick := rand.IntN(5) + 1
+		reply := make(chan Result)
+		// 0..5 fingers: 3 odd and 3 even values, so the game is fair (50/50)
+		pick := Msg{value: rand.IntN(6), playerID: id, reply: reply}
 
-		// send pick — abort if tournament is over
-		select {
-		case ch <- Msg{value: pick, playerId: id, reply: replyCh}:
-		case <-done:
+		if !send(out, pick, done) {
 			return
 		}
-
-		// wait for the match result — abort if tournament is over
 		select {
-		case won := <-replyCh:
-			if !won {
-				return // eliminated, stop playing
+		case res := <-reply:
+			if res != Won {
+				return // Lost or Champion
 			}
-			// won this round: loop and send a new pick for the next match
 		case <-done:
 			return
 		}
 	}
 }
 
-func addPlayer(id string, done <-chan struct{}) chan Msg {
+// addPlayer starts a player and returns the channel on which it sends its picks.
+func addPlayer(id string, done <-chan struct{}) <-chan Msg {
 	ch := make(chan Msg)
 	go Player(ch, id, done)
 	return ch

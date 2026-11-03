@@ -1,25 +1,27 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"os"
 )
 
 func main() {
-	matchRounds := 4
-	numPlayers := 1 << matchRounds
-	done := make(chan struct{})
-
-	var channels []chan Msg
-	for i := 0; i < numPlayers; i++ {
-		ch := addPlayer(fmt.Sprintf("player-%d", i), done)
-		channels = append(channels, ch)
+	m := flag.Int("m", 4, "number of rounds: the game has N = 2^m players")
+	flag.Parse()
+	if *m < 1 || *m > 10 {
+		fmt.Fprintln(os.Stderr, "m must be between 1 and 10")
+		os.Exit(2)
 	}
-	finalCh := spawnRound(channels, done)
+	n := 1 << *m
 
-	// the last message on finalCh is the overall winner
-	winner := <-finalCh
-	fmt.Printf("Tournament winner: %s\n", winner.playerId)
+	done := make(chan struct{})
+	defer close(done) // stops every goroutine still alive (e.g. the relays)
 
-	// signal all goroutines (players + match forwarders) to stop
-	close(done)
+	players := make([]<-chan Msg, n)
+	for i := range players {
+		players[i] = addPlayer(fmt.Sprintf("player-%d", i), done)
+	}
+
+	fmt.Printf("Tournament winner: %s\n", <-Tournament(players, done))
 }
