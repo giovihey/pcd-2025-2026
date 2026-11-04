@@ -1,50 +1,26 @@
 package main
 
-import "math/rand/v2"
-
-// Result is what a match tells a player about the game it has just played.
-type Result int
-
-const (
-	Lost     Result = iota // eliminated: stop playing
-	Won                    // won this round: send a new pick for the next one
-	Champion               // won the final: the tournament is over
+import (
+	"fmt"
+	"math/rand/v2"
 )
 
-// Msg is the only data exchanged between players and matches.
-// The reply channel is where the match sends the outcome back to the player
-// (the same request/reply pattern used for client-server interaction).
+// Msg is the message sent by a player to the match it is playing.
 type Msg struct {
-	value    int
+	value    int       // number of fingers shown: 0..5
 	playerID string
-	reply    chan Result
+	reply    chan bool // where the match sends the outcome (true = won)
 }
 
-// Player repeatedly sends a pick on out and waits for the outcome of the game,
-// until it is eliminated, becomes champion, or the tournament is cancelled.
-func Player(out chan<- Msg, id string, done <-chan struct{}) {
-	for {
-		reply := make(chan Result)
-		// 0..5 fingers: 3 odd and 3 even values, so the game is fair (50/50)
-		pick := Msg{value: rand.IntN(6), playerID: id, reply: reply}
-
-		if !send(out, pick, done) {
-			return
-		}
-		select {
-		case res := <-reply:
-			if res != Won {
-				return // Lost or Champion
-			}
-		case <-done:
+// Player is a client process. Its path is the list of request channels of the
+// matches it would play, one per round, if it keeps winning.
+func Player(id int, path []chan<- Msg) {
+	name := fmt.Sprintf("player-%d", id)
+	reply := make(chan bool)
+	for _, request := range path {
+		request <- Msg{value: rand.IntN(6), playerID: name, reply: reply}
+		if won := <-reply; !won {
 			return
 		}
 	}
-}
-
-// addPlayer starts a player and returns the channel on which it sends its picks.
-func addPlayer(id string, done <-chan struct{}) <-chan Msg {
-	ch := make(chan Msg)
-	go Player(ch, id, done)
-	return ch
 }

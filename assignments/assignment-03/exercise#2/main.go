@@ -15,13 +15,31 @@ func main() {
 	}
 	n := 1 << *m
 
-	done := make(chan struct{})
-	defer close(done) // stops every goroutine still alive (e.g. the relays)
+	requests := make([][]chan Msg, *m)
+	for r := range requests {
+		requests[r] = make([]chan Msg, n>>(r+1))
+		for j := range requests[r] {
+			requests[r][j] = make(chan Msg)
+		}
+	}
+	champion := make(chan string)
 
-	players := make([]<-chan Msg, n)
-	for i := range players {
-		players[i] = addPlayer(fmt.Sprintf("player-%d", i), done)
+	// processes: N-1 matches
+	for r := 0; r < *m-1; r++ {
+		for j, request := range requests[r] {
+			go Match(r+1, j, request)
+		}
+	}
+	go Final(*m, requests[*m-1][0], champion)
+
+	// player i plays match i>>(r+1) in round r+1
+	for i := 0; i < n; i++ {
+		path := make([]chan<- Msg, *m)
+		for r := range path {
+			path[r] = requests[r][i>>(r+1)]
+		}
+		go Player(i, path)
 	}
 
-	fmt.Printf("Tournament winner: %s\n", <-Tournament(players, done))
+	fmt.Printf("Tournament winner: %s\n", <-champion)
 }
