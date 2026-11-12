@@ -7,7 +7,7 @@ import java.util.UUID
 object HomeAlarmProtocol:
   enum AlarmCommand:
     case PinEntered(pin: String, mode: ArmingMode = FullArm)
-    case SensorTriggered(sensorId: UUID, sensorType: String, zone: Zone)
+    case SensorTriggered(sensorId: UUID, sensorType: SensorType, zone: Zone)
     case ExitDelayExpired
     case EntryDelayExpired
 

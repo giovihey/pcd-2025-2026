@@ -1,6 +1,5 @@
 plugins {
     scala
-    application
 }
 
 repositories {
@@ -27,8 +26,4 @@ dependencies {
 
 tasks.named<Test>("test") {
     useJUnitPlatform()
-}
-
-application {
-    mainClass.set("alarm.Main")
 }

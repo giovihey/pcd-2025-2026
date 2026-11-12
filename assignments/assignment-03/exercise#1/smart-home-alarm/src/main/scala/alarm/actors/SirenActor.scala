@@ -9,8 +9,8 @@ object SirenActor:
   def apply(): Behavior[SirenCommand] =
     Behaviors.receiveMessage:
       case ActivateSiren =>
-        println("[SIREN] 🔔 ALARM! ALARM! ALARM!")
+        println("[SIREN] ALARM! ALARM! ALARM!")
         Behaviors.same
       case DeactivateSiren =>
-        println("[SIREN] 🔕 Siren deactivated.")
+        println("[SIREN] Siren deactivated!")
         Behaviors.same
