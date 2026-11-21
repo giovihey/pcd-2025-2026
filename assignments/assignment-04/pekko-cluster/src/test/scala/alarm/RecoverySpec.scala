@@ -4,8 +4,10 @@ import alarm.ArmingMode.FullArm
 import alarm.HomeAlarmProtocol.*
 import alarm.SensorType.Motion
 import alarm.Zone.*
+import alarm.actors.SirenActor
 import org.apache.pekko.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
 import org.apache.pekko.actor.typed.ActorRef
+import org.apache.pekko.actor.typed.receptionist.Receptionist
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 
@@ -97,3 +99,15 @@ class RecoverySpec extends ScalaTestWithActorTestKit, AnyWordSpecLike, Matchers:
       statusOf(acu).state shouldBe "ENTRY_DELAY"
       sirenProbe.expectMessage(slowCfg.entryDelay + 400.millis, ActivateSiren)
       statusOf(acu).state shouldBe "ALARM"
+
+  "The clustered entry point" should :
+
+    "start in RECOVERING and find the siren through the receptionist" in :
+      val sirenProbe = createTestProbe[SirenCommand]()
+      system.receptionist ! Receptionist.Register(SirenActor.Key, sirenProbe.ref)
+      val acu = spawn(AlarmControlUnit.clustered(cfg))
+
+      statusOf(acu).state shouldBe "RECOVERING"
+      acu ! PinEntered("1234")
+      // the group router waits for the first listing of the receptionist, hence the longer timeout
+      sirenProbe.expectMessage(5.seconds, DeactivateSiren)

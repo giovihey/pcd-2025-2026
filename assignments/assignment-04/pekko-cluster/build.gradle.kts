@@ -13,10 +13,11 @@ dependencies {
 
     // Runtime dependencies
     implementation("org.apache.pekko:pekko-actor-typed_$scalaBinary:$pekkoVersion")
+    implementation("org.apache.pekko:pekko-cluster-typed_$scalaBinary:$pekkoVersion")
+    implementation("org.apache.pekko:pekko-serialization-jackson_$scalaBinary:$pekkoVersion")
     implementation("com.typesafe.scala-logging:scala-logging_$scalaBinary:3.9.6")
     implementation("org.scala-lang:scala3-library_$scalaBinary:$scalaVersion")
     implementation("ch.qos.logback:logback-classic:1.5.32")
-    implementation("org.apache.pekko:pekko-serialization-jackson_$scalaBinary:$pekkoVersion")
 
     // Test dependencies
     testImplementation("org.scalatest:scalatest_$scalaBinary:3.2.20")
@@ -27,4 +28,13 @@ dependencies {
 
 tasks.named<Test>("test") {
     useJUnitPlatform()
+}
+
+// .\gradlew.bat runDemo --console=plain
+// Starts 3 cluster nodes in one JVM (2 "control" nodes + 1 "peripherals" node) with a console.
+tasks.register<JavaExec>("runDemo") {
+    group = "application"
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("alarm.cluster.AlarmApp")
+    standardInput = System.`in`
 }

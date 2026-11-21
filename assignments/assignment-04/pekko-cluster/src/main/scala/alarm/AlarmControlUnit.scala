@@ -1,8 +1,9 @@
 package alarm
 
 import alarm.HomeAlarmProtocol.*
+import alarm.actors.SirenActor
 import org.apache.pekko.actor.typed.{ActorRef, Behavior}
-import org.apache.pekko.actor.typed.scaladsl.{ActorContext, Behaviors}
+import org.apache.pekko.actor.typed.scaladsl.{ActorContext, Behaviors, Routers}
 
 import scala.concurrent.duration.*
 
@@ -26,6 +27,15 @@ object AlarmControlUnit:
   def apply(siren: ActorRef[SirenCommand], config: AlarmConfig = AlarmConfig()): Behavior[AlarmCommand] =
     disarmed(siren, config)
 
+  /** Entry point used by the Cluster Singleton. The siren can run on any node, so it is found through
+   * the receptionist: a group router sends the commands to the sirens registered under
+   * [[alarm.actors.SirenActor.Key]]. The unit starts in RECOVERING (see [[recovering]]).
+   */
+  def clustered(config: AlarmConfig = AlarmConfig()): Behavior[AlarmCommand] =
+    Behaviors.setup: ctx =>
+      val siren = ctx.spawn(Routers.group(SirenActor.Key), "siren-router")
+      recovering(siren, config)
+
   /** Entry point for the cluster. A unit that is created or recreated (for example on another node,
    * after a failure) has lost its state, so it must assume neither "armed" nor "disarmed":
    *  - sensor events and wrong PINs are ignored (and logged);
@@ -34,19 +44,19 @@ object AlarmControlUnit:
    */
   def recovering(siren: ActorRef[SirenCommand], config: AlarmConfig = AlarmConfig()): Behavior[AlarmCommand] =
     Behaviors.setup: ctx =>
-      ctx.log.warn("[ACU] State: RECOVERING — previous state lost, a correct PIN is required")
+      ctx.log.warn("[ACU] State: RECOVERING - previous state lost, a correct PIN is required")
       Behaviors.receiveMessage:
         case PinEntered(pin, _) if pin == config.correctPin =>
-          ctx.log.info("[ACU] Correct PIN in RECOVERING — siren off, system DISARMED")
+          ctx.log.info("[ACU] Correct PIN in RECOVERING - siren off, system DISARMED")
           siren ! DeactivateSiren
           disarmed(siren, config)
 
         case PinEntered(_, _) =>
-          ctx.log.warn("[ACU] Wrong PIN in RECOVERING — ignored")
+          ctx.log.warn("[ACU] Wrong PIN in RECOVERING - ignored")
           Behaviors.same
 
         case SensorTriggered(id, t, z) =>
-          ctx.log.warn("[ACU] Sensor [{}/{}/{}] ignored — recovering, the state of the system is unknown", id, t, z.name)
+          ctx.log.warn("[ACU] Sensor [{}/{}/{}] ignored - recovering, the state of the system is unknown", id, t, z.name)
           Behaviors.same
 
         case GetStatus(replyTo) =>
@@ -67,18 +77,18 @@ object AlarmControlUnit:
           // only zones the system knows about can be armed
           val zones = mode.activeZones(config.knownZones).intersect(config.knownZones)
           if zones.isEmpty then
-            ctx.log.warn("[ACU] Correct PIN but no known zone selected ({}) — staying disarmed", mode)
+            ctx.log.warn("[ACU] Correct PIN but no known zone selected ({}) - staying disarmed", mode)
             Behaviors.same
           else
-            ctx.log.info("[ACU] Correct PIN — mode {} — starting exit delay ({}s)", mode, config.exitDelay.toSeconds)
+            ctx.log.info("[ACU] Correct PIN - mode {} - starting exit delay ({}s)", mode, config.exitDelay.toSeconds)
             exitDelay(siren, config, zones)
 
         case PinEntered(_, _) =>
-          ctx.log.warn("[ACU] Wrong PIN in DISARMED — ignored")
+          ctx.log.warn("[ACU] Wrong PIN in DISARMED - ignored")
           Behaviors.same
 
         case SensorTriggered(id, t, z) =>
-          ctx.log.info("[ACU] Sensor [{}/{}/{}] ignored — system disarmed", id, t, z.name)
+          ctx.log.info("[ACU] Sensor [{}/{}/{}] ignored - system disarmed", id, t, z.name)
           Behaviors.same
 
         case GetStatus(replyTo) =>
@@ -92,17 +102,17 @@ object AlarmControlUnit:
       timers.startSingleTimer(ExitDelayExpired, config.exitDelay)
       Behaviors.setup: ctx =>
         ctx.log.info(
-          "[ACU] State: EXIT DELAY — {}s — active zones: {}",
+          "[ACU] State: EXIT DELAY - {}s - active zones: {}",
           config.exitDelay.toSeconds,
           activeZones.map(_.name).mkString(", "),
         )
         Behaviors.receiveMessage:
           case ExitDelayExpired =>
-            ctx.log.info("[ACU] Exit delay expired — system ARMED")
+            ctx.log.info("[ACU] Exit delay expired - system ARMED")
             armed(siren, config, activeZones)
 
           case SensorTriggered(id, t, z) =>
-            ctx.log.info("[ACU] Sensor [{}/{}/{}] ignored — exit delay active", id, t, z.name)
+            ctx.log.info("[ACU] Sensor [{}/{}/{}] ignored - exit delay active", id, t, z.name)
             Behaviors.same
 
           case PinEntered(_, _) =>
@@ -118,27 +128,27 @@ object AlarmControlUnit:
   private def armed(siren: ActorRef[SirenCommand], config: AlarmConfig, activeZones: Set[Zone]): Behavior[AlarmCommand] =
     Behaviors.setup: ctx =>
       ctx.log.info(
-        "[ACU]  State: ARMED — monitoring zones: {}",
+        "[ACU]  State: ARMED - monitoring zones: {}",
         activeZones.map(_.name).mkString(", "),
       )
       Behaviors.receiveMessage:
         case SensorTriggered(id, t, zone) if activeZones.contains(zone) =>
           ctx.log.warn(
-            "[ACU] Intrusion! Sensor [{}/{}/{}] — starting entry delay ({}s)",
+            "[ACU] Intrusion! Sensor [{}/{}/{}] - starting entry delay ({}s)",
             id, t, zone.name, config.entryDelay.toSeconds,
           )
           entryDelay(siren, config, activeZones)
 
         case SensorTriggered(id, t, zone) =>
-          // sensor fired but its zone is not active — silently ignore if known, warn if unknown
+          // sensor fired but its zone is not active - silently ignore if known, warn if unknown
           if config.knownZones.contains(zone) then
-            ctx.log.info("[ACU] Sensor [{}/{}/{}] ignored — zone not active", id, t, zone.name)
+            ctx.log.info("[ACU] Sensor [{}/{}/{}] ignored - zone not active", id, t, zone.name)
           else
-            ctx.log.warn("[ACU] Sensor [{}/{}/{}] ignored — UNKNOWN zone, check the configuration", id, t, zone.name)
+            ctx.log.warn("[ACU] Sensor [{}/{}/{}] ignored - UNKNOWN zone, check the configuration", id, t, zone.name)
           Behaviors.same
 
         case PinEntered(pin, _) if pin == config.correctPin =>
-          ctx.log.info("[ACU] Correct PIN while armed — disarming directly")
+          ctx.log.info("[ACU] Correct PIN while armed - disarming directly")
           disarmed(siren, config)
 
         case PinEntered(_, _) =>
@@ -155,10 +165,10 @@ object AlarmControlUnit:
     Behaviors.withTimers: timers =>
       timers.startSingleTimer(EntryDelayExpired, config.entryDelay)
       Behaviors.setup: ctx =>
-        ctx.log.warn("[ACU]  State: ENTRY DELAY — enter PIN within {}s!", config.entryDelay.toSeconds)
+        ctx.log.warn("[ACU]  State: ENTRY DELAY - enter PIN within {}s!", config.entryDelay.toSeconds)
         Behaviors.receiveMessage:
           case PinEntered(pin, _) if pin == config.correctPin =>
-            ctx.log.info("[ACU] Correct PIN — disarmed in time!")
+            ctx.log.info("[ACU] Correct PIN - disarmed in time!")
             timers.cancel(EntryDelayExpired)
             disarmed(siren, config)
 
@@ -167,12 +177,12 @@ object AlarmControlUnit:
             Behaviors.same
 
           case EntryDelayExpired =>
-            ctx.log.warn("[ACU] Entry delay expired — ALARM TRIGGERED")
+            ctx.log.warn("[ACU] Entry delay expired - ALARM TRIGGERED")
             alarmState(siren, config)
 
           case SensorTriggered(_, _, _) =>
             // additional triggers during countdown are ignored regardless of zone
-            ctx.log.info("[ACU] Additional sensor trigger ignored — already counting down")
+            ctx.log.info("[ACU] Additional sensor trigger ignored - already counting down")
             Behaviors.same
 
           case GetStatus(replyTo) =>
@@ -187,7 +197,7 @@ object AlarmControlUnit:
       siren ! ActivateSiren
       Behaviors.receiveMessage:
         case PinEntered(pin, _) if pin == config.correctPin =>
-          ctx.log.info("[ACU] Correct PIN — stopping alarm and disarming")
+          ctx.log.info("[ACU] Correct PIN - stopping alarm and disarming")
           siren ! DeactivateSiren
           disarmed(siren, config)
 
@@ -196,7 +206,7 @@ object AlarmControlUnit:
           Behaviors.same
 
         case SensorTriggered(_, _, _) =>
-          ctx.log.info("[ACU] Sensor trigger ignored — already in alarm")
+          ctx.log.info("[ACU] Sensor trigger ignored - already in alarm")
           Behaviors.same
 
         case GetStatus(replyTo) =>
