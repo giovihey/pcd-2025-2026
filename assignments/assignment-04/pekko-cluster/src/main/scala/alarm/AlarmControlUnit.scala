@@ -2,7 +2,7 @@ package alarm
 
 import alarm.HomeAlarmProtocol.*
 import org.apache.pekko.actor.typed.{ActorRef, Behavior}
-import org.apache.pekko.actor.typed.scaladsl.Behaviors
+import org.apache.pekko.actor.typed.scaladsl.{ActorContext, Behaviors}
 
 import scala.concurrent.duration.*
 
@@ -26,6 +26,39 @@ object AlarmControlUnit:
   def apply(siren: ActorRef[SirenCommand], config: AlarmConfig = AlarmConfig()): Behavior[AlarmCommand] =
     disarmed(siren, config)
 
+  /** Entry point for the cluster. A unit that is created or recreated (for example on another node,
+   * after a failure) has lost its state, so it must assume neither "armed" nor "disarmed":
+   *  - sensor events and wrong PINs are ignored (and logged);
+   *  - a correct PIN brings it to DISARMED, and also switches the siren off, in case the unit
+   *    that crashed had left it on. The arming mode inside that PIN is not used to arm.
+   */
+  def recovering(siren: ActorRef[SirenCommand], config: AlarmConfig = AlarmConfig()): Behavior[AlarmCommand] =
+    Behaviors.setup: ctx =>
+      ctx.log.warn("[ACU] State: RECOVERING — previous state lost, a correct PIN is required")
+      Behaviors.receiveMessage:
+        case PinEntered(pin, _) if pin == config.correctPin =>
+          ctx.log.info("[ACU] Correct PIN in RECOVERING — siren off, system DISARMED")
+          siren ! DeactivateSiren
+          disarmed(siren, config)
+
+        case PinEntered(_, _) =>
+          ctx.log.warn("[ACU] Wrong PIN in RECOVERING — ignored")
+          Behaviors.same
+
+        case SensorTriggered(id, t, z) =>
+          ctx.log.warn("[ACU] Sensor [{}/{}/{}] ignored — recovering, the state of the system is unknown", id, t, z.name)
+          Behaviors.same
+
+        case GetStatus(replyTo) =>
+          reportStatus(ctx, "RECOVERING", replyTo)
+          Behaviors.same
+
+        case ExitDelayExpired | EntryDelayExpired => Behaviors.same
+
+  /** Answers a [[GetStatus]] query: the name of the state and the node that hosts this unit. */
+  private def reportStatus(ctx: ActorContext[AlarmCommand], state: String, replyTo: ActorRef[Status]): Unit =
+    replyTo ! Status(state, ctx.system.address.toString)
+
   private def disarmed(siren: ActorRef[SirenCommand], config: AlarmConfig): Behavior[AlarmCommand] =
     Behaviors.setup: ctx =>
       ctx.log.info("[ACU] State: DISARMED")
@@ -46,6 +79,10 @@ object AlarmControlUnit:
 
         case SensorTriggered(id, t, z) =>
           ctx.log.info("[ACU] Sensor [{}/{}/{}] ignored — system disarmed", id, t, z.name)
+          Behaviors.same
+
+        case GetStatus(replyTo) =>
+          reportStatus(ctx, "DISARMED", replyTo)
           Behaviors.same
 
         case ExitDelayExpired | EntryDelayExpired => Behaviors.same
@@ -70,6 +107,10 @@ object AlarmControlUnit:
 
           case PinEntered(_, _) =>
             ctx.log.info("[ACU] PIN ignored during exit delay")
+            Behaviors.same
+
+          case GetStatus(replyTo) =>
+            reportStatus(ctx, "EXIT_DELAY", replyTo)
             Behaviors.same
 
           case EntryDelayExpired => Behaviors.same
@@ -104,6 +145,10 @@ object AlarmControlUnit:
           ctx.log.warn("[ACU] Wrong PIN while armed")
           Behaviors.same
 
+        case GetStatus(replyTo) =>
+          reportStatus(ctx, "ARMED", replyTo)
+          Behaviors.same
+
         case ExitDelayExpired | EntryDelayExpired => Behaviors.same
 
   private def entryDelay(siren: ActorRef[SirenCommand], config: AlarmConfig, activeZones: Set[Zone]): Behavior[AlarmCommand] =
@@ -130,6 +175,10 @@ object AlarmControlUnit:
             ctx.log.info("[ACU] Additional sensor trigger ignored — already counting down")
             Behaviors.same
 
+          case GetStatus(replyTo) =>
+            reportStatus(ctx, "ENTRY_DELAY", replyTo)
+            Behaviors.same
+
           case ExitDelayExpired => Behaviors.same
 
   private def alarmState(siren: ActorRef[SirenCommand], config: AlarmConfig): Behavior[AlarmCommand] =
@@ -148,6 +197,10 @@ object AlarmControlUnit:
 
         case SensorTriggered(_, _, _) =>
           ctx.log.info("[ACU] Sensor trigger ignored — already in alarm")
+          Behaviors.same
+
+        case GetStatus(replyTo) =>
+          reportStatus(ctx, "ALARM", replyTo)
           Behaviors.same
 
         case ExitDelayExpired | EntryDelayExpired => Behaviors.same

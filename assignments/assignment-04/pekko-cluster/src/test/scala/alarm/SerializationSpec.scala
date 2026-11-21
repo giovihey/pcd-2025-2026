@@ -59,3 +59,8 @@ class SerializationSpec extends ScalaTestWithActorTestKit(SerializationSpec.conf
       // SirenActor matches on ActivateSiren / DeactivateSiren: a copy would not match
       roundTrip(ActivateSiren) should be theSameInstanceAs ActivateSiren
       roundTrip(DeactivateSiren) should be theSameInstanceAs DeactivateSiren
+
+    "preserve the Status reply of GetStatus" in:
+      val msg = Status("ARMED", "pekko://ClusterSystem@127.0.0.1:2551")
+      roundTrip(msg) shouldBe msg
+      

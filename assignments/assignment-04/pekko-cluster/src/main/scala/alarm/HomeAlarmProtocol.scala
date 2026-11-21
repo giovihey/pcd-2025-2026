@@ -1,6 +1,7 @@
 package alarm
 
 import alarm.ArmingMode.FullArm
+import org.apache.pekko.actor.typed.ActorRef
 
 import java.util.UUID
 
@@ -8,7 +9,6 @@ object HomeAlarmProtocol:
 
   /** A sealed trait with case classes / case objects (not a Scala 3 enum): Jackson restores
    *  parameterised enum cases badly, while this shape is the one used in the seminar examples.
-   *  The import paths stay the same: `HomeAlarmProtocol.AlarmCommand.PinEntered` etc.
    */
   sealed trait AlarmCommand extends CborSerializable
 
@@ -18,7 +18,12 @@ object HomeAlarmProtocol:
     case object ExitDelayExpired extends AlarmCommand
     case object EntryDelayExpired extends AlarmCommand
 
-  /** A simple enum, which Jackson handles by name. */
+    /** Diagnostic query: the control unit answers with the name of its state and the node that hosts it. */
+    final case class GetStatus(replyTo: ActorRef[Status]) extends AlarmCommand
+
+  /** Reply to [[AlarmCommand.GetStatus]]. */
+  final case class Status(state: String, node: String) extends CborSerializable
+
   enum SirenCommand extends CborSerializable:
     case ActivateSiren
     case DeactivateSiren
